@@ -15,6 +15,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Valor inválido' }, { status: 400 })
   }
 
+  const baseUrl = process.env.APP_URL
+
   const preferenceData = {
     items: [{
       id: 'doacao-livre',
@@ -23,8 +25,8 @@ export async function POST(req: NextRequest) {
       quantity: 1,
     }],
     back_urls: {
-      success: 'http://localhost:3000/sucesso',
-      failure: 'http://localhost:3000/erro',
+      success: `${baseUrl}/sucesso`,
+      failure: `${baseUrl}/erro`,
     },
     auto_return: 'approved'
   }
