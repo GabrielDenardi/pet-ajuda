@@ -13,17 +13,26 @@ function SuccessContent() {
   const router = useRouter()
 
   useEffect(() => {
-    if (paymentId) {
-      fetch("/api/confirm-payment", {
+    if (!paymentId) return
+
+    const interval = setInterval(() => {
+      fetch("/api/check-payment", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: paymentId })
       })
-          .then((res) => res.ok ? setStatus("success") : setStatus("error"))
-          .catch(() => setStatus("error"))
-    }
+          .then(res => res.json())
+          .then(data => {
+            if (data.confirmed) {
+              setStatus("success")
+              clearInterval(interval)
+            }
+          })
+          .catch(() => {
+          })
+    }, 5000)
+
+    return () => clearInterval(interval)
   }, [paymentId])
 
   return (
