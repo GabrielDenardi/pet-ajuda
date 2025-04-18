@@ -26,6 +26,7 @@ export async function POST(req: NextRequest) {
     }],
     back_urls: {
       success: `${baseUrl}/sucesso`,
+      pending: `${baseUrl}/sucesso`,
       failure: `${baseUrl}/erro`,
     },
     auto_return: 'approved'

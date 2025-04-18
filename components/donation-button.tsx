@@ -38,7 +38,7 @@ export function DonationButton() {
 
             if (data?.url) {
                 window.open(data.url, "_blank")
-                router.push("/sucesso")
+                // router.push("/sucesso")
             } else {
                 throw new Error("URL de checkout não retornada")
             }
