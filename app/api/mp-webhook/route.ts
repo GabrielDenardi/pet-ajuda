@@ -1,55 +1,63 @@
-console.log("🛬 Webhook ativado!");
-
 import { NextRequest, NextResponse } from 'next/server'
 import { MercadoPagoConfig, Payment } from 'mercadopago'
-import path from 'path'
-import { promises as fs } from 'fs'
+import { db } from '@/lib/firebaseAdmin'
+import admin from 'firebase-admin'
 
 export async function POST(req: NextRequest) {
-  let body: any = {}
-
-  const contentType = req.headers.get('content-type') || ''
-  if (contentType.includes('application/json')) {
-    body = await req.json()
-  } else if (contentType.includes('application/x-www-form-urlencoded')) {
-    const formData = await req.formData()
-    formData.forEach((value, key) => (body[key] = value))
-  }
-
-  console.log("📥 Webhook recebido:", body)
-
+  const body = await parseBody(req)  // como você já faz
   const { type, data } = body
 
   if (type === 'payment' && data?.id) {
     const mp = new MercadoPagoConfig({
       accessToken: process.env.MERCADO_PAGO_ACCESS_TOKEN!,
     })
-
     const payment = new Payment(mp)
 
     try {
       const result = await payment.get({ id: data.id })
 
       if (result.status === 'approved') {
-        const filePath = path.join(process.cwd(), 'data/donation.json')
-        const file = await fs.readFile(filePath, 'utf-8')
-        const json = JSON.parse(file)
+        const paymentId = data.id.toString()
+        const confirmedRef = db.collection('confirmed-payments').doc(paymentId)
+        const confirmedSnap = await confirmedRef.get()
 
-        json.arrecadado += result.transaction_amount
-        await fs.writeFile(filePath, JSON.stringify(json, null, 2))
+        if (confirmedSnap.exists) {
+          console.log(`⚠️ Pagamento ${paymentId} já registrado.`)
+          return NextResponse.json({ alreadyConfirmed: true })
+        }
 
-        console.log("✅ Valor atualizado:", json)
-        return NextResponse.json({ ok: true, updated: json })
+        await confirmedRef.set({
+          amount: result.transaction_amount,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        })
+
+        const totalRef = db.collection('donations').doc('total')
+        await totalRef.set(
+            { arrecadado: admin.firestore.FieldValue.increment(result.transaction_amount!) },
+            { merge: true }
+        )
+
+        const updated = await totalRef.get()
+        return NextResponse.json({ ok: true, updated: updated.data() })
       } else {
-        console.log("ℹ️ Pagamento não está aprovado. Status:", result.status)
+        console.log("ℹ️ Pagamento não aprovado. Status:", result.status)
+        return NextResponse.json({ status: result.status })
       }
 
     } catch (err: any) {
-      // Tratar erro de ID inexistente (ex: teste do painel)
-      console.warn("⚠️ Pagamento não encontrado ou erro de API:", err.message || err)
-      return NextResponse.json({ warning: 'Pagamento não encontrado ou inválido' }, { status: 200 })
+      console.error("❌ Erro ao processar pagamento:", err)
+      return NextResponse.json({ error: true }, { status: 500 })
     }
   }
 
   return NextResponse.json({ received: true })
+}
+
+async function parseBody(req: NextRequest) {
+  const contentType = req.headers.get('content-type') || ''
+  if (contentType.includes('application/json')) return req.json()
+  const form = await req.formData()
+  const obj: any = {}
+  form.forEach((v, k) => (obj[k] = v))
+  return obj
 }

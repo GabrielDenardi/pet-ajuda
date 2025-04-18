@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server'
-import path from 'path'
-import { promises as fs } from 'fs'
+import { db } from '@/lib/firebaseAdmin'
 
 export async function GET() {
-  const filePath = path.join(process.cwd(), 'data/donation.json') // novo caminho
-  const fileContents = await fs.readFile(filePath, 'utf-8')
-  const data = JSON.parse(fileContents)
-
-  return NextResponse.json(data)
+  const doc = await db.collection('donations').doc('total').get()
+  if (!doc.exists) {
+    return NextResponse.json({ arrecadado: 0 })
+  }
+  const data = doc.data()!
+  return NextResponse.json({ arrecadado: data.arrecadado })
 }
