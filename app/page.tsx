@@ -15,14 +15,17 @@ export default function Home() {
   const [scrollY, setScrollY] = useState(0)
   const [menuOpen, setMenuOpen] = useState(false)
   const [arrecadado, setArrecadado] = useState(0)
-  const [meta, setMeta] = useState(10000)
+  const [meta, setMeta] = useState(0)
   const [hasReceipts, setHasReceipts] = useState(false)
 
   useEffect(() => {
     async function fetchProgress() {
       const res = await fetch("/api/donation-progress")
-      const data = await res.json()
-      const porcentagem = (data.arrecadado / data.meta) * 100
+      const data: { arrecadado: number; meta: number } = await res.json()
+
+      const porcentagem =
+          data.meta > 0 ? (data.arrecadado / data.meta) * 100 : 0
+
       setProgress(porcentagem)
       setMeta(data.meta)
       setArrecadado(data.arrecadado)
