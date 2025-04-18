@@ -37,8 +37,7 @@ export function DonationButton() {
             const data = await res.json()
 
             if (data?.url) {
-                window.open(data.url, "_blank")
-                // router.push("/sucesso")
+                router.push(data.url)
             } else {
                 throw new Error("URL de checkout não retornada")
             }
