@@ -62,23 +62,6 @@ export function MobileMenu({ onClose }: MobileMenuProps) {
             <span className="font-medium">Doar agora</span>
           </button>
         </motion.div>
-
-        <motion.div
-          className="mt-8 flex gap-4"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          <a href="#" className="w-10 h-10 rounded-full bg-background/50 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors">
-            <Instagram size={18} />
-          </a>
-          <a href="#" className="w-10 h-10 rounded-full bg-background/50 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors">
-            <Twitter size={18} />
-          </a>
-          <a href="#" className="w-10 h-10 rounded-full bg-background/50 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors">
-            <Facebook size={18} />
-          </a>
-        </motion.div>
       </div>
 
       {/* Modal da Doação */}
