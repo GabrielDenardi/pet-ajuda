@@ -9,6 +9,7 @@ import { ExternalLink, Menu } from "lucide-react"
 import { DonationCard } from "@/components/donation-card"
 import { DonationButton } from "@/components/donation-button"
 import { MobileMenu } from "@/components/mobile-menu"
+import ReactConfetti from "react-confetti"
 
 export default function Home() {
   const [progress, setProgress] = useState(0)
@@ -18,6 +19,10 @@ export default function Home() {
   const [meta, setMeta] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [hasReceipts, setHasReceipts] = useState(false)
+
+  const [celebrated, setCelebrated] = useState(false)
+  const [showConfetti, setShowConfetti] = useState(false)
+  const [showModal, setShowModal] = useState(false)
 
   useEffect(() => {
     async function fetchProgress() {
@@ -41,14 +46,25 @@ export default function Home() {
     fetchProgress()
     const interval = setInterval(fetchProgress, 10000)
     return () => clearInterval(interval)
-  }, [])  
+  }, [])
+
+  useEffect(() => {
+    if (
+        !loading && arrecadado !== null && meta !== null && arrecadado >= meta && !celebrated
+    ) {
+      setShowConfetti(true)
+      setShowModal(true)
+      setCelebrated(true)
+      setTimeout(() => setShowConfetti(false), 5000)
+    }
+  }, [loading, arrecadado, meta, celebrated])
 
   // Animate progress bar on load
   useEffect(() => {
     const handleScroll = () => {
       setScrollY(window.scrollY)
     }
-  
+
     window.addEventListener("scroll", handleScroll)
     return () => {
       window.removeEventListener("scroll", handleScroll)
@@ -57,6 +73,60 @@ export default function Home() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-between">
+
+      {/* Confetti com transição suave */}
+      <AnimatePresence>
+        {showConfetti && (
+            <motion.div
+                key="confetti"
+                className="pointer-events-none fixed inset-0 z-40"
+                initial={{ opacity: 1 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0, transition: { duration: 1 } }}
+            >
+              <ReactConfetti recycle={false} numberOfPieces={300} />
+            </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal moderno */}
+      <AnimatePresence>
+        {showModal && (
+            <motion.div
+                className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+            >
+              <motion.div
+                  className="bg-white text-black rounded-2xl p-8 max-w-md w-full shadow-2xl"
+                  initial={{ scale: 0.8, y: 50, opacity: 0 }}
+                  animate={{ scale: 1, y: 0, opacity: 1 }}
+                  exit={{ scale: 0.8, y: 50, opacity: 0 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              >
+                <h2 className="text-3xl font-extrabold mb-4">🎉 Parabéns!</h2>
+                <p className="mb-2">Graças a vocês, atingimos nossa meta de:</p>
+                <p className="text-xl font-semibold mb-6">
+                  {arrecadado !== null
+                      ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(arrecadado)
+                      : ''}
+                </p>
+                <p className="mb-6">
+                  Muito obrigado a todos que contribuíram! Em breve definiremos uma nova meta para continuar
+                  ajudando animais de rua juntos.
+                </p>
+                <button
+                    onClick={() => setShowModal(false)}
+                    className="w-full py-3 bg-primary text-white font-medium rounded-lg hover:opacity-90 transition"
+                >
+                  Fechar
+                </button>
+              </motion.div>
+            </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Animated background */}
       <div className="fixed inset-0 -z-10">
         <div className="absolute inset-0 bg-gradient-to-b from-background to-background/80" />
@@ -151,7 +221,7 @@ export default function Home() {
               }}
             />
 
-            
+
           <motion.div
             className="absolute bottom-0 left-0 right-0 p-4 md:p-6 z-20"
             initial={{ opacity: 0, y: 20 }}
@@ -191,7 +261,7 @@ export default function Home() {
         </div>
       </section>
 
-      
+
 
       {/* Footer */}
       <motion.footer
