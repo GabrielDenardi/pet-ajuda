@@ -14,21 +14,29 @@ export default function Home() {
   const [progress, setProgress] = useState(0)
   const [scrollY, setScrollY] = useState(0)
   const [menuOpen, setMenuOpen] = useState(false)
-  const [arrecadado, setArrecadado] = useState(0)
-  const [meta, setMeta] = useState(0)
+  const [arrecadado, setArrecadado] = useState<number | null>(null)
+  const [meta, setMeta] = useState<number | null>(null)
+  const [loading, setLoading] = useState(true)
   const [hasReceipts, setHasReceipts] = useState(false)
 
   useEffect(() => {
     async function fetchProgress() {
-      const res = await fetch("/api/donation-progress")
-      const data: { arrecadado: number; meta: number } = await res.json()
+      +setLoading(true)
+      try {
+        const res = await fetch("/api/donation-progress")
+        const data: { arrecadado: number; meta: number } = await res.json()
 
-      const porcentagem =
-          data.meta > 0 ? (data.arrecadado / data.meta) * 100 : 0
+        const porcentagem =
+            data.meta > 0 ? (data.arrecadado / data.meta) * 100 : 0
 
-      setProgress(porcentagem)
-      setMeta(data.meta)
-      setArrecadado(data.arrecadado)
+        setProgress(porcentagem)
+        setMeta(data.meta)
+        setArrecadado(data.arrecadado)
+      } catch (err) {
+        console.error(err)
+      } finally {
+        +setLoading(false)
+      }
     }
     fetchProgress()
     const interval = setInterval(fetchProgress, 10000)
@@ -151,14 +159,28 @@ export default function Home() {
             transition={{ duration: 0.5, delay: 1.2 }}
           >
             <div className="flex justify-between text-white mb-2">
-              <span className="font-medium text-base md:text-lg">
-                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(arrecadado)} arrecadados
-              </span>
+               <span className="font-medium text-base md:text-lg">
+                 {loading || arrecadado === null
+                     ? "Carregando..."
+                     : new Intl.NumberFormat("pt-BR", {
+                   style: "currency",
+                   currency: "BRL",
+                 }).format(arrecadado) + " arrecadados"}
+               </span>
               <span>
-                Meta: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(meta)}
-              </span>
+            Meta:{" "}
+                {loading || meta === null
+                    ? "Carregando..."
+                    : new Intl.NumberFormat("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    }).format(meta)}
+                </span>
             </div>
-            <Progress value={progress} className="h-2 md:h-3 bg-white/20" />
+            <Progress
+                value={loading ? 0 : progress}
+                className="h-2 md:h-3 bg-white/20"
+            />
           </motion.div>
           </motion.div>
         </motion.div>
