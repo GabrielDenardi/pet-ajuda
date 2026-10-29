@@ -4,7 +4,7 @@ import { db } from '@/lib/firebaseAdmin'
 import admin from 'firebase-admin'
 
 export async function POST(req: NextRequest) {
-  const body = await parseBody(req)  // como você já faz
+  const body = await parseBody(req)
   const { type, data } = body
 
   if (type === 'payment' && data?.id) {
