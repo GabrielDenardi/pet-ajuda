@@ -1,12 +1,16 @@
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { adminCookieName, isValidAdminSecret } from '@/lib/admin-auth'
 
 export async function POST(req: Request) {
   const { password } = await req.json()
 
-  if (password === process.env.ADMIN_SECRET) {
-    cookies().set('admin-auth', process.env.ADMIN_SECRET!, {
+  if (isValidAdminSecret(password)) {
+    const cookieStore = await cookies()
+    cookieStore.set(adminCookieName, password, {
       httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
       path: '/',
       maxAge: 60 * 60 * 24,
     })
