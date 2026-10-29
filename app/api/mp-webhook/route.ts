@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { MercadoPagoConfig, Payment } from 'mercadopago'
-import { db } from '@/lib/firebaseAdmin'
-import admin from 'firebase-admin'
+import { registerApprovedPayment } from '@/lib/payments'
 
 export async function POST(req: NextRequest) {
   const body = await parseBody(req)
@@ -18,27 +17,13 @@ export async function POST(req: NextRequest) {
 
       if (result.status === 'approved') {
         const paymentId = data.id.toString()
-        const confirmedRef = db.collection('confirmed-payments').doc(paymentId)
-        const confirmedSnap = await confirmedRef.get()
+        const registration = await registerApprovedPayment(paymentId, result.transaction_amount!)
 
-        if (confirmedSnap.exists) {
+        if (registration.alreadyConfirmed) {
           console.log(`⚠️ Pagamento ${paymentId} já registrado.`)
-          return NextResponse.json({ alreadyConfirmed: true })
         }
 
-        await confirmedRef.set({
-          amount: result.transaction_amount,
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        })
-
-        const totalRef = db.collection('donations').doc('total')
-        await totalRef.set(
-            { arrecadado: admin.firestore.FieldValue.increment(result.transaction_amount!) },
-            { merge: true }
-        )
-
-        const updated = await totalRef.get()
-        return NextResponse.json({ ok: true, updated: updated.data() })
+        return NextResponse.json(registration)
       } else {
         console.log("ℹ️ Pagamento não aprovado. Status:", result.status)
         return NextResponse.json({ status: result.status })
