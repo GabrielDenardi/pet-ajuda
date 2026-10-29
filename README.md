@@ -1,6 +1,6 @@
 # PetAjuda
 
-Plataforma de doações para ajudar animais em situação de rua. No ar em [petajuda.com.br](https://petajuda.com.br).
+Plataforma de doações para ajudar animais em situação de rua, construída e publicada em abril de 2025.
 
 ## O que faz
 
